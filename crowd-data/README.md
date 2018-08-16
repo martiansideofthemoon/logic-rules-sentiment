@@ -4,6 +4,6 @@ This dataset contains 447 sentences (of style A-but-B and negations), taken from
 
 Each user has been presented three choices for the sentiment of the sentence,
 
-0 -------- negative
-0.5 ------ neutral
-1 -------- positive
+* 0.0 - negative  
+* 0.5 - neutral  
+* 1.0 - positive
