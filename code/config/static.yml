@@ -1,0 +1,35 @@
+# model configuration
+batch_size: 32
+eval_batch_size: 1000
+lr: 1.0
+embedding_size: 300
+num_classes: 2
+keep_prob: 0.5
+clipped_norm: 3
+optimizer: adadelta
+conv_filters:
+    - size: 3
+      channels: 100
+    - size: 4
+      channels: 100
+    - size: 5
+      channels: 100
+max_epochs: 15
+eval_frequency: 10
+mask: False
+shuffle: True
+cnn_mode: static
+# iterative configuration
+iterative: False
+l1_schedule: logicnn
+algorithm: perceptron
+data: complete
+rescale: True
+iterative_epochs: 5
+use_log_prob: True
+perceptron_shuffle: False
+# perceptron SGD config
+perceptron_batch_size: 32
+perceptron_lr: 1.0
+# perceptron weighted config
+granularity: 0.001
