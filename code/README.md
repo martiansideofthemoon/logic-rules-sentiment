@@ -1,7 +1,7 @@
 ## Setup
 
 1. Download Google's `word2vec` embeddings and place them inside `data/w2v/`. This is a large file (~ `3.5G`). You may `git clone` [this](https://github.com/mmihaltz/word2vec-GoogleNews-vectors).
-2. Ensure you have a working `tensorflow` or `tensorflow-gpu` (version 1.1). You will also need `tensorflow_hub` for the ELMo models. Additional dependencies include `numpy`, `yaml`, `bunch` and `cPickle`. To build the negation database (this has already been done), you will also need `stanfordcorenlp`.
+2. Ensure you have a working `tensorflow` or `tensorflow-gpu` (version 1.1). You will also need `tensorflow_hub` for the ELMo models. Additional dependencies include `scipy`, `matplotlib`, `numpy`, `pyyaml`, `munch`. To build the negation database (this has already been done), you will also need `stanfordcorenlp`.
 3. Pre-process the data by using,
 ```
 cd data

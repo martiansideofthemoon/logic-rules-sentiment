@@ -1,10 +1,10 @@
-import cPickle
+import pickle
 import numpy as np
 import os
 
 
 with open('data/sst2-sentence/neg_db', 'rb') as f:
-    negation_database = cPickle.load(f)
+    negation_database = pickle.load(f)
 
 
 class Dataset(object):
@@ -14,7 +14,7 @@ class Dataset(object):
         self.rev_vocab = rev_vocab
 
         with open(os.path.join(dr, filename), 'rb') as f:
-            data = cPickle.load(f)
+            data = pickle.load(f)
 
         self.sentences = \
             [' '.join([rev_vocab[x] for x in sent['sentence'] if x != 0]) for sent in data]

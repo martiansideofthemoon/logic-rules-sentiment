@@ -1,4 +1,4 @@
-import cPickle
+import pickle
 import os
 
 from stanfordcorenlp import StanfordCoreNLP
@@ -26,7 +26,7 @@ for dr in dirs:
     for filename in files:
         print(filename)
         with open(os.path.join(dr, filename), 'rb') as f:
-            data = cPickle.load(f)
+            data = pickle.load(f)
         sentences = [' '.join([rev_vocab[x] for x in sent['sentence'] if x != 0]) for sent in data]
         for i, sentence in enumerate(sentences):
             if i % 100 == 0:
@@ -35,4 +35,4 @@ for dr in dirs:
                 negation_database[sentence] = 1
 
 with open(os.path.join(dr, 'neg_db'), 'wb') as f:
-    data = cPickle.dump(negation_database, f)
+    data = pickle.dump(negation_database, f)

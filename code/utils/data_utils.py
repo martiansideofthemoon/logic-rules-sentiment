@@ -1,10 +1,10 @@
-import cPickle
+import pickle
 import os
 import sys
 
 import numpy as np
 
-from logger import get_logger
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 def load_pickle(args, split):
     logger.info("Loading split '%s'", split)
     with open(os.path.join(args.data_dir, split + ".pickle"), 'rb') as f:
-        data = cPickle.load(f)
+        data = pickle.load(f)
     logger.info("Total # of %s samples - %d", split, len(data))
     return data
 
@@ -27,7 +27,7 @@ def load_vocab(args):
 
 def load_w2v(args, rev_vocab):
     with open(os.path.join(args.data_dir, args.w2v_file), 'rb') as f:
-        w2v = cPickle.load(f)
+        w2v = pickle.load(f)
     # Sanity check of the order of vectors
     for i, word in enumerate(rev_vocab):
         if w2v[i]['word'] != word:

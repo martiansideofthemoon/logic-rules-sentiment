@@ -1,8 +1,8 @@
-import cPickle
+import pickle
 import numpy as np
 
 with open('data/sst2-sentence/neg_db', 'rb') as f:
-    negation_database = cPickle.load(f)
+    negation_database = pickle.load(f)
 
 
 # Global variable information
@@ -16,7 +16,7 @@ def has_negation(sentence):
 
 # open SST2 data
 with open('data/sst2-sentence/test.pickle', 'rb') as f:
-    data = cPickle.load(f)
+    data = pickle.load(f)
 
 sst2_database = {}
 for d in data:

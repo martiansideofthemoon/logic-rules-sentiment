@@ -4,7 +4,7 @@ import tensorflow as tf
 import numpy as np
 import random
 
-from bunch import bunchify
+from munch import Munch
 
 from analysis import analysis
 from config.arguments import modify_arguments, modify_config, parser
@@ -27,7 +27,7 @@ def main():
 
     with open(args.config_file, 'r') as stream:
         config = yaml.load(stream)
-        args.config = bunchify(modify_config(args, config))
+        args.config = Munch(modify_config(args, config))
 
     logger.info(args)
 

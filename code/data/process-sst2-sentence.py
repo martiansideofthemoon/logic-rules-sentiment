@@ -25,14 +25,14 @@ def load_bin_vec(fname, vocab):
         header = f.readline()
         vocab_size, layer1_size = map(int, header.split())
         binary_len = np.dtype('float32').itemsize * layer1_size
-        for line in xrange(vocab_size):
+        for line in range(vocab_size):
             word = []
             while True:
                 ch = f.read(1)
-                if ch == ' ':
-                    word = ''.join(word)
+                if ch == b' ':
+                    word = ''.join([x.decode('latin-1') for x in word])
                     break
-                if ch != '\n':
+                if ch != b'\n':
                     word.append(ch)
             if word in vocab:
                 word_vecs[word] = np.fromstring(f.read(binary_len), dtype='float32')
@@ -46,7 +46,7 @@ def build_data(filename, word_freq, clean_string=True):
     Loads data
     """
     revs = []
-    with open(filename, "rb") as f:
+    with open(filename, "r") as f:
         for line_no, line in enumerate(f):
             line = line.strip()
             label = int(line[0])
@@ -100,9 +100,15 @@ def build_vocab(word_freq):
 
 
 def add_random_vectors(word_to_vec, rev_vocab, vector_size):
+    counter1 = 0
+    counter2 = 0
     for word in rev_vocab:
+        counter1 += 1
         if word not in word_to_vec:
+            counter2 += 1
             word_to_vec[word] = np.random.uniform(-0.25, 0.25, vector_size)
+    print("Total vocab words = %d" % counter1)
+    print("Total random vectors = %d" % counter2)
 
 
 def write_pickle(pickle_path, data, vocab):

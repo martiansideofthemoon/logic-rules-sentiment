@@ -1,11 +1,11 @@
-import cPickle
+import pickle
 import numpy as np
 import os
 import re
 
 
 with open('data/sst2-sentence/neg_db', 'rb') as f:
-    negation_database = cPickle.load(f)
+    negation_database = pickle.load(f)
 
 
 # Global variable information
