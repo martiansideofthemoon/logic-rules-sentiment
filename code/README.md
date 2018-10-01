@@ -22,7 +22,7 @@ For the experiments in the paper, only sentence level SST2 has been used, so it 
 6. You could also analyze saved models using the flag `--save-model` while training and running `--mode analysis` with the same `--job-id`. You could extract some dataset statistics using `python analysis/data-stats.py` and crowd data statistics using `python analysis/crowd-data-stats.py`.
 
 ## Model Settings
-The argument and model configuration details have been added to `config/README.md`.
+The argument and model configuration details have been added to `CONFIG.md`.
 
 ## Results
 
