@@ -25,7 +25,7 @@ def load_bin_vec(fname, vocab):
         header = f.readline()
         vocab_size, layer1_size = map(int, header.split())
         binary_len = np.dtype('float32').itemsize * layer1_size
-        for line in range(vocab_size):
+        for line in xrange(vocab_size):
             word = []
             while True:
                 ch = f.read(1)
@@ -46,7 +46,7 @@ def build_data(filename, word_freq, clean_string=True):
     Loads data
     """
     revs = []
-    with open(filename, "r") as f:
+    with open(filename, "rb") as f:
         for line_no, line in enumerate(f):
             line = line.strip()
             label = int(line[0])
