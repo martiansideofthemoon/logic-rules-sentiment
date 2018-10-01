@@ -1,15 +1,7 @@
 import numpy as np
 
 
-class Feature(object):
-    needs_nn = False
-    postprocess = False
-
-
-class NeuralNetwork(Feature):
-    needs_nn = True
-    postprocess = True
-
+class NeuralNetwork(object):
     def __init__(self, args, instance, info):
         self.seq_len = instance['sentence_len']
         self.sentence = instance['sentence']
@@ -20,14 +12,12 @@ class NeuralNetwork(Feature):
         self.final_seq_len = np.array(self.seq_len)
 
     def postprocess_func(self, output):
+        # A logarithm is taken here to account for softmax in logicnn.compute_probability
         self.output = np.log(output)
         return self.output
 
 
-class LogicRuleBut(Feature):
-    needs_nn = True
-    postprocess = True
-
+class LogicRuleBut(object):
     def __init__(self, args, instance, info):
         self.seq_len = instance['sentence_len']
         self.sentence = instance['sentence']
@@ -43,11 +33,6 @@ class LogicRuleBut(Feature):
             self.final_inputs = np.array(self.new_sent)
             self.final_string = " ".join([rev_vocab[x] for x in self.new_sent])
             self.final_seq_len = np.array(self.seq_len)
-            # Storing a mask with only A values = 1, rest 0
-            self.A_mask = np.concatenate((
-                np.ones(first_but),
-                np.zeros(self.seq_len - first_but)
-            ))
         else:
             self.final_string = instance['pad_string']
             self.final_inputs = np.array(self.sentence)
@@ -56,9 +41,13 @@ class LogicRuleBut(Feature):
             self.A_mask = np.zeros(self.seq_len)
 
     def postprocess_func(self, output):
+        # We directly use the output probabilities as the rule value
+        # We ignore the -1 since it won't affect computation
+        # In Hu et al. 2016, C = 6 and \lambda = 1
         if self.hasBut is True:
             self.output = output
         else:
+            # These will cancel off when the sentence doesn't have 'but'
             self.output = np.array([0.5, 0.5])
         return self.output
 

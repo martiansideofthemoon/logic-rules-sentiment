@@ -6,10 +6,6 @@ from utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def compute_mask(split):
-    return np.array([x['features'][1].A_mask for x in split])
-
-
 def append_features(args, data, model, vocab, rev_vocab):
     info = {
         'model_eval': model,
@@ -30,21 +26,19 @@ def compute_features(args, data, sess, model):
         # The last batch is likely to be smaller than batch_size
         split.extend([split[-1]] * (batch_size - total))
         for j, ft in enumerate(features):
-            if ft.needs_nn is False:
-                output = np.stack([x['features'][j].generate() for x in split], axis=0)
-            else:
-                feed_dict = {
-                    model.inputs.name: np.stack([x['features'][j].final_inputs for x in split], axis=0)
-                }
-                if args.config.elmo is True:
-                    feed_dict.update({
-                        model.input_strings.name: [x['features'][j].final_string for x in split]
-                    })
-                output = sess.run(model.softmax, feed_dict=feed_dict)
-                if ft.postprocess is True:
-                    output = np.stack(
-                        [x['features'][j].postprocess_func(output[k]) for k, x in enumerate(split)], axis=0
-                    )
+            # Combining feature data into a single matrix for TF computation
+            feed_dict = {
+                model.inputs.name: np.stack([x['features'][j].final_inputs for x in split], axis=0)
+            }
+            if args.config.elmo is True:
+                feed_dict.update({
+                    model.input_strings.name: [x['features'][j].final_string for x in split]
+                })
+            output = sess.run(model.softmax, feed_dict=feed_dict)
+            # Distributing feature outputs into their respective objects
+            output = np.stack(
+                [x['features'][j].postprocess_func(output[k]) for k, x in enumerate(split)], axis=0
+            )
             feature_data[j, i * batch_size:(i + 1) * batch_size, :] = output[:total]
     return feature_data
 
@@ -57,6 +51,7 @@ def compute_probability(args, weights, split, split_features):
 
     probs = np.zeros([len(split), args.config.num_classes])
     for i, x in enumerate(split):
+        # split_features has shape (fts, split_size, num_classes)
         logits = np.array([
             np.dot(split_features[:, i, 0], weights),
             np.dot(split_features[:, i, 1], weights)

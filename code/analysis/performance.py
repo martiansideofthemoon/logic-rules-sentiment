@@ -139,7 +139,7 @@ all_results = []
 for prior in priors:
     print("Printing %s results" % prior)
     results = []
-    for i in range(150):
+    for i in range(1, 101):
         f1 = "logs/%s_seed_%d.log" % (prior, i)
         if os.path.exists(f1) is False:
             continue

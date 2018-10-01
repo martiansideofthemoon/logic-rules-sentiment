@@ -36,5 +36,5 @@ These are YAML files located in the `config` folder.
 12. `cnn_mode` - This can be `rand`, `static` or `nonstatic`. Refer to Kim et al. 2014 for a description of each of these modes.
 13. `iterative` - Set `True` to use distillation in the loss function.
 14. `l1_schedule` - Interpolation constant schedule between soft label and hard label loss. Currently supported schedules are `logicnn`, `constant`, `step` and `interpolate`.
-15. `l1_val` - Interpolation value for hard label loss for the `interpolate` mode.
+15. `l1_val` - Interpolation value for hard label loss for the `interpolate` mode. This acts like the decay constant for the `logicnn` mode.
 16. `elmo` - Set `True` to use ELMo word representations.

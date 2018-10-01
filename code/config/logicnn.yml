@@ -21,7 +21,7 @@ cnn_mode: nonstatic
 ## Iterative Distillation Configuration
 iterative: True
 l1_schedule: logicnn
-l1_val: 1.0
+l1_val: 0.95
 
 # ELMo word representations
 elmo: False
