@@ -1,4 +1,9 @@
 code/save
 code/save_best
 *.yml
-data/w2v/
+code/data/w2v
+code/logs
+code/data
+__pycache__
+*.tsv
+*.pdf

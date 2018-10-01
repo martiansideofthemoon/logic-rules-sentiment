@@ -3,6 +3,9 @@ import numpy as np
 import os
 import re
 
+TOTAL_BUT = 210.0
+TOTAL_NEG = 314.0
+TOTAL_DISC = 447.0
 
 with open('data/sst2-sentence/neg_db', 'rb') as f:
     negation_database = pickle.load(f)
@@ -63,9 +66,9 @@ class Result(object):
                     continue
                 mistakes_p.append(line.split('\t')[2])
             self.epochs[e]['mistakes_p'] = mistakes_p
-            self.epochs[e]['but_p'] = sum(map(has_but, mistakes_p))
-            self.epochs[e]['neg_p'] = sum(map(has_negation, mistakes_p))
-            self.epochs[e]['discourse_p'] = sum(map(has_discourse, mistakes_p))
+            self.epochs[e]['but_p'] = (TOTAL_BUT - sum(map(has_but, mistakes_p))) / TOTAL_BUT
+            self.epochs[e]['neg_p'] = (TOTAL_NEG - sum(map(has_negation, mistakes_p))) / TOTAL_NEG
+            self.epochs[e]['discourse_p'] = (TOTAL_DISC - sum(map(has_discourse, mistakes_p))) / TOTAL_DISC
             # Building q data
             f1 = 'save/%s_seed_%d/incorrect_q_epoch_%d.txt' % (prior, run, e)
             with open(f1, 'r') as f:
@@ -76,9 +79,9 @@ class Result(object):
                     continue
                 mistakes_q.append(line.split('\t')[2])
             self.epochs[e]['mistakes_q'] = mistakes_q
-            self.epochs[e]['but_q'] = sum(map(has_but, mistakes_q))
-            self.epochs[e]['neg_q'] = sum(map(has_negation, mistakes_q))
-            self.epochs[e]['discourse_q'] = sum(map(has_discourse, mistakes_q))
+            self.epochs[e]['but_q'] = (TOTAL_BUT - sum(map(has_but, mistakes_q))) / TOTAL_BUT
+            self.epochs[e]['neg_q'] = (TOTAL_NEG - sum(map(has_negation, mistakes_q))) / TOTAL_NEG
+            self.epochs[e]['discourse_q'] = (TOTAL_DISC - sum(map(has_discourse, mistakes_q))) / TOTAL_DISC
 
     def best(self, mode='val_q'):
         return max(self.epochs, key=lambda x: x[mode])
@@ -130,7 +133,7 @@ def print_best_n(text, results, silent=False, n=3):
     print("worst %s :- average = %.2f \pm %.2f;" % ("valid", avg_valid, std_valid))
     print("worst %s :- average = %.2f \pm %.2f;" % ("test", avg_test, std_test))
 
-priors = ['no_iter', 'iter', 'grad_sent_100', 'grad2_elmo_sent_100', 'grad2_elmo2_sent_100']
+priors = ['default', 'logicnn', 'elmo']
 all_results = []
 
 for prior in priors:
