@@ -1,6 +1,6 @@
 ## Logic Rules for Sentiment Classification
 
-This folder contains the code accompanying our EMNLP 2018 paper "Revisiting the Importance of Encoding Logic Rules in Sentiment Classification".
+This folder contains the code accompanying our EMNLP 2018 paper "Revisiting the Importance of Encoding Logic Rules in Sentiment Classification". The baseline model is roughly an exact implementation of Kim et al. 2014, "Convolutional Neural Networks for Sentiment Classification".
 
 ## Setup
 
@@ -16,7 +16,7 @@ To re-build the negation database, you will need `stanfordcorenlp`. This databas
 ```
 cd data
 ./process_sst2.sh
-./process-sst2-sentence.sh
+./process_sst2_sentence.sh
 ```
 For the experiments in the paper, only sentence level SST2 has been used, so it is sufficient to run `./process-sst2-sentence.sh`.
 
@@ -34,4 +34,4 @@ The argument and model configuration details have been added to `CONFIG.md`.
 This code has been used to produce all results in the paper except `Figure 2`. `Figure 2` has been generated using [ZhitingHu/logicnn](https://github.com/ZhitingHu/logicnn/), to measure reproducibility against the author's original codebase.
 
 ## Contributing
-Feel free to add Issues and PRs (for the existing issues). It should be fairly easy to understand the code.
+Feel free to add Issues and PRs (for the existing issues)!
