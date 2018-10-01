@@ -65,29 +65,6 @@ def evaluate(sess, model_dev, data, args):
     return results, losses
 
 
-def evaluate_perceptron(args, weights, data, probs):
-    incorrect = []
-    incorrect_probs = []
-    correct = []
-    correct_probs = []
-    for i, x in enumerate(data):
-        label, sentence_id = x['label'], x['sentence_id']
-        if np.argmax(probs[i]) == label:
-            correct.append(sentence_id)
-            correct_probs.append(probs[i].tolist())
-        else:
-            incorrect.append(sentence_id)
-            incorrect_probs.append(probs[i].tolist())
-
-    results = {
-        'correct': correct,
-        'correct_probs': correct_probs,
-        'incorrect': incorrect,
-        'incorrect_probs': incorrect_probs
-    }
-    return results
-
-
 def detailed_results(args, split, test_set, rev_vocab, results):
     # Convert `incorrect` back into sentences
     incorrect, incorrect_probs = results['incorrect'], results['incorrect_probs']

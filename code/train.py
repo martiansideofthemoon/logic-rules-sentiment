@@ -1,4 +1,3 @@
-import math
 import os
 import random
 import time
@@ -7,14 +6,13 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_hub as hub
 
-import perceptron
+import logicnn
 
 from model.nn import SentimentModel
-from model.perceptron_sgd import PerceptronModel
+
 from test import evaluate, detailed_results
 from utils import l1_schedule
 from utils.data_utils import (
-    load_train_tfrecords,
     load_pickle,
     load_vocab,
     load_w2v
@@ -69,14 +67,14 @@ def train(args):
             model_eval = SentimentModel(args, None, mode='eval', elmo=elmo)
 
         if args.config.iterative is True or args.config.gradient is True:
-            perceptron.append_features(args, train_data, model_eval, vocab, rev_vocab)
+            logicnn.append_features(args, train_data, model_eval, vocab, rev_vocab)
         num_batches = int(np.floor(float(len(train_data)) / batch_size))
         # Loading the dev data
         dev_set = load_pickle(args, split='dev')
-        perceptron.append_features(args, dev_set, model_eval, vocab, rev_vocab)
+        logicnn.append_features(args, dev_set, model_eval, vocab, rev_vocab)
         # Loading the test data
         test_set = load_pickle(args, split='test')
-        perceptron.append_features(args, test_set, model_eval, vocab, rev_vocab)
+        logicnn.append_features(args, test_set, model_eval, vocab, rev_vocab)
 
         # This need not be zero due to incomplete runs
         epoch = model.epoch.eval()
@@ -105,20 +103,15 @@ def train(args):
                     model.labels.name: labels
                 }
 
-                # Interfacing the perceptron algorithm
+                # Interfacing the logicnn algorithm
                 if args.config.iterative is True:
-                    perceptron_data = train_data if args.config.data == 'complete' else split
                     # generate dynamic features for whole dataset
-                    feats = perceptron.compute_features(args, perceptron_data, sess, model_eval)
-                    split_feats = feats[:, i * batch_size:(i + 1) * batch_size, :] if args.config.data == 'complete' else feats
+                    split_feats = logicnn.compute_features(args, split, sess, model_eval)
+                    # weight settings in Hu et al. 2016
+                    weights = np.array([1.0, 6.0])
 
-                    if args.config.algorithm == 'logicnn':
-                        weights = np.array([1.0, 6.0])
-                    else:
-                        weights = np.array([1.0, 0.0])
-
-                    # calculate perceptron probabilities
-                    soft_labels = perceptron.compute_probability(
+                    # calculate logicnn probabilities
+                    soft_labels = logicnn.compute_probability(
                         args, weights, split, split_feats
                     )
                     schedule = getattr(l1_schedule, args.config.l1_schedule)
@@ -128,15 +121,7 @@ def train(args):
                         ),
                         model.soft_labels.name: soft_labels
                     })
-                if args.config.gradient is True:
-                    sentence_mask = perceptron.compute_mask(split)
-                    schedule = getattr(l1_schedule, args.config.l1_schedule)
-                    feed_dict.update({
-                        model.l1_weight.name: schedule(
-                            epoch, num_batches * epoch + i, num_batches, args.config.l1_val
-                        ),
-                        model.sentence_mask.name: sentence_mask
-                    })
+
                 if args.config.elmo is True:
                     feed_dict.update({
                         model.input_strings.name: [x['pad_string'] for x in split]
@@ -154,21 +139,21 @@ def train(args):
                         "Epoch %d, minibatches done %d / %d. Avg Training Loss %.4f. Time elapsed in epoch %.4f.",
                         epoch, i + 1, num_batches, final_cost, (time.time() - epoch_start) / 3600.0
                     )
-                if (i + 1) % args.config.eval_frequency == 0 or (i + 1) == num_batches:
+                if (i + 1) == num_batches:
                     logger.info("Evaluating model after %d minibatches", i + 1)
                     weights = np.array([1.0, 6.0])
 
                     dev_p_results, _ = evaluate(sess, model_eval, dev_set, args)
-                    dev_feats = perceptron.compute_features(args, dev_set, sess, model_eval)
-                    dev_probs = perceptron.compute_probability(args, weights, dev_set, dev_feats)
-                    dev_q_results = perceptron.evaluate_perceptron(args, weights, dev_set, dev_probs)
+                    dev_feats = logicnn.compute_features(args, dev_set, sess, model_eval)
+                    dev_probs = logicnn.compute_probability(args, weights, dev_set, dev_feats)
+                    dev_q_results = logicnn.evaluate_logicnn(args, weights, dev_set, dev_probs)
                     dev_p = float(len(dev_p_results['correct'])) * 100.0 / len(dev_set)
                     dev_q = float(len(dev_q_results['correct'])) * 100.0 / len(dev_set)
 
                     test_p_results, _ = evaluate(sess, model_eval, test_set, args)
-                    test_feats = perceptron.compute_features(args, test_set, sess, model_eval)
-                    test_probs = perceptron.compute_probability(args, weights, test_set, test_feats)
-                    test_q_results = perceptron.evaluate_perceptron(args, weights, test_set, test_probs)
+                    test_feats = logicnn.compute_features(args, test_set, sess, model_eval)
+                    test_probs = logicnn.compute_probability(args, weights, test_set, test_feats)
+                    test_q_results = logicnn.evaluate_logicnn(args, weights, test_set, test_probs)
                     test_p = float(len(test_p_results['correct'])) * 100.0 / len(test_set)
                     test_q = float(len(test_q_results['correct'])) * 100.0 / len(test_set)
 

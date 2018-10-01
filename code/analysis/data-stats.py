@@ -69,7 +69,6 @@ def load_vocab(vocab_file):
     return vocab, rev_vocab
 
 dirs = ['data/sst2/']
-# dirs = ['data/mr/%d' % i for i in range(10)]
 files = ['train.pickle', 'dev.pickle', 'test.pickle']
 
 

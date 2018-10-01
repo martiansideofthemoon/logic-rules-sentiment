@@ -1,11 +1,7 @@
-# Sentence Classification in TensorFlow
-
-This project is roughly an exact TensorFlow implementation of Yoon Kim's paper [Convolutional Neural Networks for Sentence Classification](https://arxiv.org/abs/1408.5882) (EMNLP 2014). His original Theano code can be found [here](https://github.com/yoonkim/CNN_sentence). Alternate to this, you can look at Denny Britz's TensorFlow implementation, [here](https://github.com/dennybritz/cnn-text-classification-tf).
-
 ## Setup
 
 1. Download Google's `word2vec` embeddings and place them inside `data/w2v/`. This is a large file (~ `3.5G`). You may `git clone` [this](https://github.com/mmihaltz/word2vec-GoogleNews-vectors).
-2. Ensure you have a working `tensorflow` or `tensorflow-gpu` (version 1.1). Additional dependencies include `yaml`, `bunch` and `cPickle`.
+2. Ensure you have a working `tensorflow` or `tensorflow-gpu` (version 1.1). You will also need `tensorflow_hub` for the ELMo models. Additional dependencies include `numpy`, `yaml`, `bunch` and `cPickle`. To build the negation database (this has already been done), you will also need `stanfordcorenlp`.
 3. Pre-process the data by using,
 ```
 cd data

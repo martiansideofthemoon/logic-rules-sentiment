@@ -24,4 +24,4 @@ l1_schedule: interpolate
 l1_val: 1.0
 
 # ELMo word representations
-elmo: False
+elmo: True

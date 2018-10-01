@@ -15,21 +15,13 @@ conv_filters:
     - size: 5
       channels: 100
 max_epochs: 20
-eval_frequency: 100000000
-mask: False
 shuffle: True
 cnn_mode: nonstatic
-# iterative configuration
+
+## Iterative Distillation Configuration
 iterative: True
 l1_schedule: logicnn
-algorithm: logicnn
-data: batch
-rescale: True
-iterative_epochs: 5
-use_log_prob: True
-perceptron_shuffle: True
-# perceptron SGD config
-perceptron_batch_size: 16
-perceptron_lr: 0.5
-# perceptron weighted config
-granularity: 0.001
+l1_val: 1.0
+
+# ELMo word representations
+elmo: False

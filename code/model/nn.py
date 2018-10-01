@@ -60,22 +60,7 @@ class SentimentModel(object):
         # Looking up input embeddings
         self.embedding_lookup = tf.nn.embedding_lookup(embeddings, self.inputs)
 
-        if config.bilstm is True:
-            # Mix the word-embeddings using a 1-layer biLSTM before the CNNs
-            cell_fw = tf.nn.rnn_cell.BasicLSTMCell(config.bilstm_units)
-            cell_bw = tf.nn.rnn_cell.BasicLSTMCell(config.bilstm_units)
-            split_input = \
-                [tf.squeeze(x) for x in tf.split(self.embedding_lookup, config.seq_len, axis=1)]
-            lstm_outputs, _, _ = tf.nn.static_bidirectional_rnn(
-                cell_fw, cell_bw, split_input, dtype=tf.float32
-            )
-            self.input_vectors = input_vectors = \
-                tf.expand_dims(
-                    tf.concat([tf.expand_dims(x, axis=1) for x in lstm_outputs], axis=1),
-                    axis=3
-                )
-            self.embedding_size = e_size = config.bilstm_units * 2
-        elif config.elmo is True:
+        if config.elmo is True:
             # Load the embeddings from the feed_dict
             self.input_strings = tf.placeholder(tf.string, [batch_size])
             self.embedding_lookup = elmo(self.input_strings, signature='default', as_dict=True)['elmo']
@@ -142,65 +127,31 @@ class SentimentModel(object):
         )
         self.cost1 = tf.reduce_sum(self.loss1) / batch_size
 
-        # Declare the soft-label loss function
-        # self.soft_labels = tf.placeholder(tf.float32, [batch_size, num_classes])
-        # self.loss2 = tf.nn.softmax_cross_entropy_with_logits(
-        #     logits=self.logits,
-        #     labels=self.soft_labels
-        # )
-        # self.cost2 = tf.reduce_sum(self.loss2) / batch_size
-
-        # Implementing the input gradient idea
-
-        if config.gradient_type == 'sum_abs_prob':
-            self.grads_zero = tf.gradients(self.softmax[:, 0], self.embedding_lookup)[0]
-            self.grads_one = tf.gradients(self.softmax[:, 1], self.embedding_lookup)[0]
-            self.grads = tf.abs(self.grads_zero) + tf.abs(self.grads_one)
-            self.sentence_mask = tf.placeholder(tf.float32, [batch_size, None])
-            self.masked_grads = tf.multiply(
-                tf.expand_dims(self.sentence_mask, axis=2),
-                self.grads
-            )
-            self.cost2 = tf.reduce_sum(self.masked_grads) / batch_size
-
-        elif config.gradient_type == 'sum_sq_log':
-            log_softmax = tf.log(self.softmax)
-            self.grads_zero = tf.gradients(log_softmax[:, 0], self.embedding_lookup)[0]
-            self.grads_one = tf.gradients(log_softmax[:, 1], self.embedding_lookup)[0]
-            self.grads = self.grads_zero + self.grads_one
-            self.grads_l2 = tf.norm(self.grads, axis=2)
-            self.sentence_mask = tf.placeholder(tf.float32, [batch_size, None])
-            self.masked_grads = tf.multiply(
-                tf.expand_dims(self.sentence_mask, axis=2),
-                self.grads
-            )
-            self.cost2 = tf.reduce_sum(tf.square(self.masked_grads)) / batch_size
-
-        elif config.gradient_type == 'max_sq_log':
-            log_prob = tf.log(tf.reduce_max(self.softmax, axis=1))
-            self.grads = tf.gradients(log_prob, self.embedding_lookup)[0]
-            self.sentence_mask = tf.placeholder(tf.float32, [batch_size, None])
-            self.masked_grads = tf.multiply(
-                tf.expand_dims(self.sentence_mask, axis=2),
-                self.grads
-            )
-            self.cost2 = tf.reduce_sum(tf.square(self.masked_grads)) / batch_size
+        # Declare the soft-label distillation loss function
+        self.soft_labels = tf.placeholder(tf.float32, [batch_size, num_classes])
+        self.loss2 = tf.nn.softmax_cross_entropy_with_logits(
+            logits=self.logits,
+            labels=self.soft_labels
+        )
+        self.cost2 = tf.reduce_sum(self.loss2) / batch_size
 
         # Interpolate the loss functions
         self.l1_weight = tf.placeholder(tf.float32)
-        if config.iterative is False and config.gradient is False:
+        if config.iterative is False:
             self.final_cost = self.cost1
         else:
             self.final_cost = self.l1_weight * self.cost1 + (1.0 - self.l1_weight) * self.cost2
 
         if config.optimizer == 'adadelta':
             opt = tf.train.AdadeltaOptimizer(
-                learning_rate=1.0,
+                learning_rate=self.learning_rate,
                 rho=0.95,
                 epsilon=1e-6
             )
         else:
-            opt = tf.train.AdamOptimizer(self.learning_rate)
+            opt = tf.train.AdamOptimizer(
+                learning_rate=self.learning_rate
+            )
 
         if mode == 'train':
             for variable in tf.trainable_variables():
@@ -219,46 +170,4 @@ class SentimentModel(object):
         self.input_str = tf.placeholder(tf.string, [1])
         self.elmo_embeddings = self.elmo(
             self.input_str, signature='default', as_dict=True
-        )
-
-    def get_queue_batch(self):
-        reader = tf.TFRecordReader()
-        _, serialized = reader.read(self.queue)
-        context_features = {
-            "sentence_len": tf.FixedLenFeature([], tf.int64),
-            "label": tf.FixedLenFeature([], tf.int64),
-            "order_id": tf.FixedLenFeature([], tf.int64)
-        }
-        sequence_features = {
-            "sentence": tf.FixedLenSequenceFeature(shape=[], dtype=tf.int64)
-        }
-        context, sequence = tf.parse_single_sequence_example(
-            serialized=serialized,
-            context_features=context_features,
-            sequence_features=sequence_features
-        )
-
-        inputs = [sequence['sentence'], context['label'], context['sentence_len'], context['order_id']]
-
-        if self.config.shuffle is True:
-            # The code below is used to shuffle the input sequence
-            # reference - https://github.com/tensorflow/tensorflow/issues/5147#issuecomment-271086206
-            dtypes = list(map(lambda x: x.dtype, inputs))
-            shapes = list(map(lambda x: x.get_shape(), inputs))
-            self.random_queue = queue = tf.RandomShuffleQueue(2000, 1999, dtypes)
-            enqueue_op = queue.enqueue(inputs)
-            qr = tf.train.QueueRunner(queue, [enqueue_op])
-            tf.add_to_collection(tf.GraphKeys.QUEUE_RUNNERS, qr)
-            inputs = queue.dequeue()
-            for tensor, shape in zip(inputs, shapes):
-                tensor.set_shape(shape)
-
-        return tf.train.batch(
-            tensors=inputs,
-            batch_size=self.batch_size,
-            capacity=2000,
-            num_threads=1,
-            # does the padding to get all lengths the same, to the maximum length of sequence in minibatch
-            dynamic_pad=True,
-            allow_smaller_final_batch=True
         )

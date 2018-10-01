@@ -1,28 +1,12 @@
 import cPickle
-import glob
 import os
-import random
 import sys
 
-import tensorflow as tf
 import numpy as np
 
 from logger import get_logger
 
 logger = get_logger(__name__)
-
-
-def load_train_tfrecords(args):
-    logger.info("Loading training data from %s", args.data_dir)
-    train_files = glob.glob(os.path.join(args.data_dir, "train*.tfrecords"))
-    logger.info("%d training file(s) used", len(train_files))
-    number_of_instances = 0
-    for i, train_file in enumerate(train_files):
-        number_of_instances += sum([1 for _ in tf.python_io.tf_record_iterator(train_file)])
-        # Using ceil below since we allow for smaller final batch
-    batches_per_epoch = int(np.ceil(number_of_instances / float(args.config.batch_size)))
-    logger.info("Total # of minibatches per epoch - %d", batches_per_epoch)
-    return train_files, number_of_instances
 
 
 def load_pickle(args, split):

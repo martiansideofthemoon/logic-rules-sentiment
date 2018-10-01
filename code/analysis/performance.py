@@ -1,19 +1,8 @@
 import cPickle
-import glob
 import numpy as np
 import os
 import re
 
-import matplotlib
-matplotlib.use('Agg')
-
-from matplotlib import pyplot
-from matplotlib.backends.backend_pdf import PdfPages
-
-
-pp = PdfPages('analysis/avg_epochs.pdf')
-pyplot.figure()
-pyplot.clf()
 
 with open('data/sst2-sentence/neg_db', 'rb') as f:
     negation_database = cPickle.load(f)
@@ -141,9 +130,6 @@ def print_best_n(text, results, silent=False, n=3):
     print("worst %s :- average = %.2f \pm %.2f;" % ("valid", avg_valid, std_valid))
     print("worst %s :- average = %.2f \pm %.2f;" % ("test", avg_test, std_test))
 
-
-# priors = ['grad2_99_logicnn', 'grad2_999_logicnn', 'grad2_90', 'grad2_999', 'grad2_99', 'grad_100', 'no_iter']
-# priors = ['grad_sent_100', 'grad2_sent_99', 'grad2_elmo_sent_100', 'grad2_elmo_sent_99', 'grad2_elmo_sent_90', 'grad2_elmo_sent_999', 'grad2_elmo_sent_9999']
 priors = ['no_iter', 'iter', 'grad_sent_100', 'grad2_elmo_sent_100', 'grad2_elmo2_sent_100']
 all_results = []
 
@@ -167,23 +153,3 @@ for prior in priors:
     keys = ['test_p', 'test_q', 'but_p', 'but_q', 'neg_p', 'neg_q', 'discourse_p', 'discourse_q']
 
     print_result("early stopping on val_p", [result.best('val_p') for result in results], keys)
-    # print_result("early stopping on test_p", [result.best('test_p') for result in results], keys)
-
-
-# Plotting results
-# keys = ['test_p', 'test_q']
-keys = ['but_p', 'but_q']
-for prior, results in zip(priors, all_results):
-    averages, stds, maxs = np.zeros([20, len(keys)]), np.zeros([20, len(keys)]), np.zeros([20, len(keys)])
-    for i in range(1, 21):
-        averages[i - 1], stds[i - 1], maxs[i - 1] = \
-            print_result("Epoch %d" % i, [result.epoch(i) for result in results], keys, silent=True)
-    for i, k in enumerate(keys):
-        pyplot.errorbar(np.array(range(1, 21)), averages[:, i], yerr=stds[:, i], label="%s_%s" % (prior, k))
-
-
-legend = pyplot.legend(bbox_to_anchor=(0, 1.02, 1, 0.2), loc="lower left", mode="expand", borderaxespad=0, ncol=2)
-pyplot.xlabel('epochs')
-pyplot.ylabel('mistakes (%d jobs)' % len(results))
-pp.savefig(bbox_inches="tight")
-pp.close()
