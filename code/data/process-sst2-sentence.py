@@ -1,11 +1,10 @@
-import cPickle
+import pickle
 import os
 import random
 import re
 import sys
 
 import numpy as np
-import tensorflow as tf
 
 from collections import defaultdict
 
@@ -26,7 +25,7 @@ def load_bin_vec(fname, vocab):
         header = f.readline()
         vocab_size, layer1_size = map(int, header.split())
         binary_len = np.dtype('float32').itemsize * layer1_size
-        for line in xrange(vocab_size):
+        for line in range(vocab_size):
             word = []
             while True:
                 ch = f.read(1)
@@ -47,7 +46,7 @@ def build_data(filename, word_freq, clean_string=True):
     Loads data
     """
     revs = []
-    with open(filename, "rb") as f:
+    with open(filename, "r") as f:
         for line_no, line in enumerate(f):
             line = line.strip()
             label = int(line[0])
@@ -115,7 +114,7 @@ def write_pickle(pickle_path, data, vocab):
         sentence_id = datum['sentence_id']
         # Sanity check before save
         if sentence_len != len(sentence):
-            print "error!"
+            print("error!")
             sys.exit(0)
         pickle_output.append({
             'sentence': sentence,
@@ -125,32 +124,7 @@ def write_pickle(pickle_path, data, vocab):
             'order_id': i,
             'pad_string': datum['text']
         })
-    cPickle.dump(pickle_output, open(pickle_path, "wb"))
-
-
-def write_tfrecords(tfrecords_path, data, vocab):
-    # Helper functions for writing TF records
-    def _int64_feature(value):
-        return tf.train.Feature(int64_list=tf.train.Int64List(value=value))
-
-    def _seq_feature(values, dtype):
-        return tf.train.FeatureList(feature=[dtype(val) if isinstance(val, list) else dtype([val]) for val in values])
-
-    writer = tf.python_io.TFRecordWriter(tfrecords_path)
-
-    for i, datum in enumerate(data):
-        sentence = [vocab[x] for x in datum['text'].split()]
-        context = tf.train.Features(feature={
-            "sentence_len": _int64_feature([datum['num_words']]),
-            "label": _int64_feature([datum['label']]),
-            "sentence_id": _int64_feature([datum['sentence_id']]),
-            "order_id": _int64_feature([i])
-        })
-        feature_lists = tf.train.FeatureLists(feature_list={
-            "sentence": _seq_feature(values=sentence, dtype=_int64_feature)
-        })
-        example = tf.train.SequenceExample(context=context, feature_lists=feature_lists)
-        writer.write(example.SerializeToString())
+    pickle.dump(pickle_output, open(pickle_path, "wb"))
 
 
 if __name__ == "__main__":
@@ -194,11 +168,9 @@ if __name__ == "__main__":
             'vector': word_to_vec[word]
         })
 
-    cPickle.dump(word_map, open(os.path.join(stsa_path, "w2v.pickle"), "wb"))
+    pickle.dump(word_map, open(os.path.join(stsa_path, "w2v.pickle"), "wb"))
 
-    # Finally, build TFrecord / Pickle files
+    # Finally, build Pickle files
     for k, v in database.items():
-        tfrecords_path = os.path.join(stsa_path, k + ".tfrecords")
         pickle_path = os.path.join(stsa_path, k + ".pickle")
-        write_tfrecords(tfrecords_path, v['data'], vocab)
         write_pickle(pickle_path, v['data'], vocab)
