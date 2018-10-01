@@ -19,6 +19,7 @@ parser.add_argument("-job_id", "--job_id", default="save_0", type=str, help="Run
 parser.add_argument("-load_id", "--load_id", default=None, type=str, help="Run ID to load from. Defaults to job_id")
 parser.add_argument("-no-cache", "--no-cache", default=False, action="store_true", help="Use cache or not")
 parser.add_argument("-eval_splits", "--eval_splits", type=str, default="dev,test", help="Set of splits to evaluate on")
+parser.add_argument("-save-model", "--save-model", default=False, action="store_true", help="Save the model or not?")
 
 parser.add_argument(
     "-mode", "--mode", default="train", type=str,

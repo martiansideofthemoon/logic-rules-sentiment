@@ -121,6 +121,8 @@ class SentimentModel(object):
         # Declare the vanilla cross-entropy loss function
         self.softmax = tf.nn.softmax(self.logits)
         self.one_hot_labels = tf.one_hot(self.labels, num_classes)
+
+        # TODO :- For compatiblity with future versions, stop gradient for label tensors
         self.loss1 = tf.nn.softmax_cross_entropy_with_logits(
             logits=self.logits,
             labels=self.one_hot_labels

@@ -10,7 +10,7 @@ import logicnn
 
 from model.nn import SentimentModel
 
-from test import evaluate, detailed_results
+from test import evaluate, detailed_results, evaluate_projection
 from utils import l1_schedule
 from utils.data_utils import (
     load_pickle,
@@ -66,7 +66,7 @@ def train(args):
         with tf.variable_scope("model", reuse=True):
             model_eval = SentimentModel(args, None, mode='eval', elmo=elmo)
 
-        if args.config.iterative is True or args.config.gradient is True:
+        if args.config.iterative is True:
             logicnn.append_features(args, train_data, model_eval, vocab, rev_vocab)
         num_batches = int(np.floor(float(len(train_data)) / batch_size))
         # Loading the dev data
@@ -146,14 +146,14 @@ def train(args):
                     dev_p_results, _ = evaluate(sess, model_eval, dev_set, args)
                     dev_feats = logicnn.compute_features(args, dev_set, sess, model_eval)
                     dev_probs = logicnn.compute_probability(args, weights, dev_set, dev_feats)
-                    dev_q_results = logicnn.evaluate_logicnn(args, weights, dev_set, dev_probs)
+                    dev_q_results = evaluate_projection(args, weights, dev_set, dev_probs)
                     dev_p = float(len(dev_p_results['correct'])) * 100.0 / len(dev_set)
                     dev_q = float(len(dev_q_results['correct'])) * 100.0 / len(dev_set)
 
                     test_p_results, _ = evaluate(sess, model_eval, test_set, args)
                     test_feats = logicnn.compute_features(args, test_set, sess, model_eval)
                     test_probs = logicnn.compute_probability(args, weights, test_set, test_feats)
-                    test_q_results = logicnn.evaluate_logicnn(args, weights, test_set, test_probs)
+                    test_q_results = evaluate_projection(args, weights, test_set, test_probs)
                     test_p = float(len(test_p_results['correct'])) * 100.0 / len(test_set)
                     test_q = float(len(test_q_results['correct'])) * 100.0 / len(test_set)
 
@@ -167,17 +167,19 @@ def train(args):
 
                     if dev_p > percent_best:
                         percent_best = dev_p
-                        logger.info("Saving Best Model")
-                        checkpoint_path = os.path.join(args.best_dir, "sentence.ckpt")
-                        model.best_saver.save(sess, checkpoint_path, global_step=model.global_step, write_meta_graph=False)
                         with open(os.path.join(args.train_dir, 'best.txt'), 'w') as f:
                             f.write(str(dev_p))
-                    # Also save the model for continuing in future
-                    checkpoint_path = os.path.join(args.train_dir, "sentence.ckpt")
-                    model.saver.save(sess, checkpoint_path, global_step=model.global_step, write_meta_graph=False)
+                        if args.save_model is True:
+                            logger.info("Saving Best Model")
+                            checkpoint_path = os.path.join(args.best_dir, "sentence.ckpt")
+                            model.best_saver.save(sess, checkpoint_path, global_step=model.global_step, write_meta_graph=False)
+                            # Also save the model for continuing in future
+                            checkpoint_path = os.path.join(args.train_dir, "sentence.ckpt")
+                            model.saver.save(sess, checkpoint_path, global_step=model.global_step, write_meta_graph=False)
             # Update epoch counter
             sess.run(model.epoch_incr)
             epoch += 1
-            checkpoint_path = os.path.join(args.train_dir, "sentence.ckpt")
-            model.saver.save(sess, checkpoint_path, global_step=model.global_step, write_meta_graph=False)
             start_batch = 0
+            if args.save_model is True:
+                checkpoint_path = os.path.join(args.train_dir, "sentence.ckpt")
+                model.saver.save(sess, checkpoint_path, global_step=model.global_step, write_meta_graph=False)

@@ -19,8 +19,6 @@ class NeuralNetwork(Feature):
         self.final_string = instance['pad_string']
         self.final_seq_len = np.array(self.seq_len)
 
-        self.use_log_prob = args.config.use_log_prob
-
     def postprocess_func(self, output):
         self.output = np.log(output)
         return self.output
@@ -36,8 +34,6 @@ class LogicRuleBut(Feature):
         self.model = info['model_eval']
         self.vocab = vocab = info['vocab']
         self.rev_vocab = rev_vocab = info['rev_vocab']
-
-        self.use_log_prob = args.config.use_log_prob
 
         self.hasBut = vocab['but'] in self.sentence
         if self.hasBut is True:
