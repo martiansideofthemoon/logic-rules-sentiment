@@ -24,4 +24,5 @@ Author = {Kalpesh Krishna and Preethi Jyothi and Mohit Iyyer},
 Booktitle = {Empirical Methods in Natural Language Processing},
 Year = "2018",
 Title = {Revisiting the Importance of Encoding Logic Rules in Sentiment Classification}
+}
 ````
